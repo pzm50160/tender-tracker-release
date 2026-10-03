@@ -1,7 +1,7 @@
 {
-  "version": "2.0.1",
+  "version": "2.0.2",
   "min_exe_version": "2.0.0",
-  "notes": "檢查更新的錯誤訊息更清楚",
+  "notes": "修正：線上更新檔的檢查碼不符",
   "files": {
     "app.py": "70d4f8ed7c2851a221778e0bea14c4296d624665c8d652362e4d53022d5726e4",
     "db.py": "63caf107ca6ccaa164f705987e9fe41f7b1639efe338cb40c60643b4341764db",
