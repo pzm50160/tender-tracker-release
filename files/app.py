@@ -271,8 +271,8 @@ with st.sidebar:
         st.caption(f"目前版本：{local['version']}")
         try:
             remote = _remote_manifest()
-        except update.UpdateError:
-            st.caption("無法檢查更新（請確認網路）")
+        except update.UpdateError as e:
+            st.caption(str(e))
             remote = None
         if remote and update.has_update(remote, local):
             st.warning(f"有新版本 {remote['version']}" + (f"：{remote['notes']}" if remote.get("notes") else ""))

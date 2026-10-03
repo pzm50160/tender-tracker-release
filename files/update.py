@@ -58,10 +58,16 @@ def fetch_manifest(client=None) -> dict:
     client = client or _client()
     try:
         r = client.get(f"{RAW_BASE}/manifest.json")
-        r.raise_for_status()
+    except httpx.HTTPError as e:
+        raise UpdateError("無法檢查更新（請確認網路）") from e
+    if r.status_code == 404:
+        raise UpdateError("目前沒有可下載的版本")
+    if r.status_code != 200:
+        raise UpdateError(f"無法檢查更新（伺服器回應 {r.status_code}）")
+    try:
         return r.json()
-    except (httpx.HTTPError, ValueError) as e:
-        raise UpdateError(f"無法檢查更新：{e}") from e
+    except ValueError as e:
+        raise UpdateError("更新資訊格式錯誤") from e
 
 
 def has_update(remote: dict, local: dict | None) -> bool:

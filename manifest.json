@@ -1,15 +1,15 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "min_exe_version": "2.0.0",
-  "notes": "第一版（v2 重寫）",
+  "notes": "檢查更新的錯誤訊息更清楚",
   "files": {
-    "app.py": "6e4c83a3d0eec77a41d0c79ad3f67fbbc06c04266b93de60552a237581af9aa6",
+    "app.py": "70d4f8ed7c2851a221778e0bea14c4296d624665c8d652362e4d53022d5726e4",
     "db.py": "63caf107ca6ccaa164f705987e9fe41f7b1639efe338cb40c60643b4341764db",
     "scraper.py": "d2201614bb08b5b3d6252a39963ccb4238795b44383ac415daee34c5d314bb4f",
     "migrate.py": "9dcd8860a200c1fb9b73708597fa0bcf52d30bccecd36feb88c6b211131db263",
     "backup.py": "af3d90b1119e8e9f7538a4d04b29118a652b01d0c663b2e620623be7bb324f4d",
     "schedule.py": "8f573a8b4802edd9a8a8bf1916a4e24f46781fa192535302c7a8d2f48cbeda96",
-    "update.py": "f698acb08a1f2300300e30dc2d6443c886bef92e79aad1fc61fe0bc6fcff2ca7",
+    "update.py": "c21b4778ee48b43db02c6c45f3fd6cae37457706b40a918e92bcbb9a7828278d",
     "auto_search.py": "664767bf351a1ceab52b65f6751cb4c163ee7a125a27352a8a2dc9cc5620fb88",
     ".streamlit/config.toml": "8136b7fa0ef87c845c0fe935dcfde2f2fdf06592434d80e7781fbb28400831c7"
   }
