@@ -318,7 +318,7 @@ with st.sidebar:
         if remote and update.has_update(remote, local):
             st.warning(f"有新版本 {remote['version']}" + (f"：{remote['notes']}" if remote.get("notes") else ""))
             if update.needs_full_package(remote):
-                st.caption("這次更新需要下載完整版，請聯絡管理者")
+                st.caption("這次更新需要重新安裝完整版，請向管理者索取安裝檔（資料不會受影響）")
             elif st.button("立即更新", type="primary", width="stretch"):
                 with st.spinner("下載更新中…"):
                     try:

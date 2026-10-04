@@ -94,7 +94,7 @@ def _target(name: str) -> str:
 
 def apply_update(remote: dict, client=None) -> None:
     if needs_full_package(remote):
-        raise UpdateError("這次更新包含程式套件的變動，需要下載完整版，請聯絡管理者")
+        raise UpdateError("這次更新需要重新安裝完整版，請向管理者索取安裝檔")
     client = client or _client()
     files: dict[str, str] = remote["files"]
     for name in files:                          # 下載前先擋掉會跳出程式資料夾的檔名
