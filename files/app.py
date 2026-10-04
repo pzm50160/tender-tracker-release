@@ -10,6 +10,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import streamlit as st
 
+import auto_search
 import backup
 import db
 import migrate
@@ -64,6 +65,45 @@ def _old_schedule_time():
 @st.cache_data(ttl=3600, show_spinner=False)
 def _remote_manifest():
     return update.fetch_manifest()
+
+
+def _read_auto_status():
+    with closing(db.connect()) as c:
+        return auto_search.get_status(c)
+
+
+SHOW = {"success": st.success, "warning": st.warning, "error": st.error, "running": st.info}
+
+
+@st.fragment(run_every=3)
+def _watch_auto_search():
+    """排程（或試跑）執行中：每 3 秒更新進度；跑完就通知並重新整理整個畫面"""
+    status = _read_auto_status()
+    since = st.session_state["watch_since"]
+    if status and status["started"] >= since and status["state"] != "running":
+        st.session_state.pop("watch_since")
+        level, text = auto_search.describe(status)
+        st.session_state["flash"] = text
+        st.toast(text, icon="✅" if level == "success" else "⚠️")
+        st.rerun()
+    if status and status["started"] >= since:
+        st.info(auto_search.describe(status)[1])
+    elif datetime.now() - datetime.fromisoformat(since) > timedelta(minutes=3):
+        st.session_state.pop("watch_since")
+        st.warning("試跑沒有開始執行，請查看程式資料夾 logs 裡的記錄檔")
+    else:
+        st.info("排程搜尋準備中…")
+
+
+def auto_status_panel():
+    status = _read_auto_status()
+    level, text = auto_search.describe(status)
+    if level == "running" and "watch_since" not in st.session_state:
+        st.session_state["watch_since"] = status["started"]      # 開著畫面時排程剛好開始
+    if "watch_since" in st.session_state:
+        _watch_auto_search()
+    elif level != "none":
+        SHOW[level](text)
 
 
 def esc(value, empty="—"):
@@ -187,10 +227,10 @@ with st.sidebar:
         if task["next_run"]:
             st.caption(f"下次執行：{task['next_run']}")
         if st.button("立即試跑一次", width="stretch",
-                     help="馬上用排程的方式執行一次，約 1～2 分鐘後到「搜尋記錄」查看結果"):
+                     help="馬上用排程的方式執行一次，跑完會在這裡和右下角通知"):
             ok, msg = schedule.run_now()
             if ok:
-                st.session_state["flash"] = "已開始在背景試跑，約 1～2 分鐘後到「搜尋記錄」查看結果"
+                st.session_state["watch_since"] = datetime.now().isoformat(timespec="seconds")
                 st.rerun()
             st.error(f"試跑失敗：{msg}")
         if st.button("停用排程", width="stretch"):
@@ -202,6 +242,7 @@ with st.sidebar:
                 st.rerun()
     else:
         st.info("排程未啟用")
+    auto_status_panel()
     default_time = (task or {}).get("time") or old_time or "08:00"
     sched_time = st.time_input("執行時間", value=datetime.strptime(default_time, "%H:%M").time())
     if st.button("更新排程時間" if task else "啟用每日排程", type="primary", width="stretch"):
@@ -343,12 +384,13 @@ tenders = db.get_tenders(
     bid_only=bid_only,
 )
 
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("標案筆數", len(tenders))
-m2.metric("未讀", sum(1 for t in tenders if not t["is_read"]))
-m3.metric("關鍵字數", len(keywords))
 last = db.get_fetch_logs(conn, 1)
-m4.metric("最新更新", last[0]["fetched_at"][:10] if last else "尚無記錄")
+with st.container(horizontal=True, gap="large"):
+    st.metric("標案筆數", len(tenders), width="content")
+    st.metric("未讀", sum(1 for t in tenders if not t["is_read"]), width="content")
+    st.metric("關鍵字數", len(keywords), width="content")
+    st.metric("最新更新", last[0]["fetched_at"][:10].replace("-", "/") if last else "尚無記錄",
+              width="content")
 st.divider()
 
 tab_list, tab_table, tab_stats, tab_log = st.tabs(["卡片檢視", "表格 / 匯出", "統計", "搜尋記錄"])
@@ -387,12 +429,12 @@ with tab_list:
     ⏰ 截止：{esc(t["deadline"])}{link}
   </div>
 </div>""", unsafe_allow_html=True)
-            b1, b2, _ = st.columns([1, 1, 6])
-            b1.button("✓ 已讀" if not unread else "標為已讀", key=f"r_{t['id']}",
-                      on_click=_toggle_read, args=(t["tender_id"], not unread))
-            b2.button("✓ 已投標" if is_bid else "標為已投標", key=f"bid_{t['id']}",
-                      type="primary" if is_bid else "secondary",
-                      on_click=_toggle_bid, args=(t["tender_id"], is_bid))
+            with st.container(horizontal=True):
+                st.button("✓ 已讀" if not unread else "標為已讀", key=f"r_{t['id']}", width="content",
+                          on_click=_toggle_read, args=(t["tender_id"], not unread))
+                st.button("✓ 已投標" if is_bid else "標為已投標", key=f"bid_{t['id']}", width="content",
+                          type="primary" if is_bid else "secondary",
+                          on_click=_toggle_bid, args=(t["tender_id"], is_bid))
 
         st.divider()
         pg = st.columns([1, 1, 3, 1, 1])
